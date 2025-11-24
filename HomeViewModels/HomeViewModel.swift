@@ -1,0 +1,18 @@
+//
+//  HomeViewModel.swift
+//  AquaMate
+//
+//  Created by Andrés Quevedo on 24/11/2025.
+//
+
+import SwiftUI
+
+struct HomeViewModel: View {
+    var body: some View {
+        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+    }
+}
+
+#Preview {
+    HomeViewModel()
+}
