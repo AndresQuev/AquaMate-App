@@ -11,7 +11,7 @@ import SwiftUI
 struct AquaMateApp: App {
     var body: some Scene {
         WindowGroup {
-            LoginView()
+            HomeViewModel()
         }
     }
 }
