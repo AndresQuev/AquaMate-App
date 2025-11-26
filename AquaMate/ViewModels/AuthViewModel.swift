@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AuthViewModel: View {
-    // Estado: qué tab está activo
+    // Tabs
     @State private var isLogin: Bool = true
     
     // Campos Login
@@ -21,6 +21,15 @@ struct AuthViewModel: View {
     @State private var registerConfirmPassword: String = ""
     @State private var registerUserName: String = ""
     
+    // Estado de autenticación
+    @State private var isAuthenticated: Bool = false
+    @State private var isLoading: Bool = false
+    @State private var authError: String? = nil
+    
+    // 💾 Credenciales de prueba
+    private let demoEmail = "user@aquamate.com"
+    private let demoPassword = "123456"
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -30,18 +39,18 @@ struct AuthViewModel: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 24) {
                         
-                        // Header similar al HomeTopHeader pero para Auth
                         AuthHeader()
                         
-                        // Segmented "Login / Register" similar al de Home
                         AuthSegmentedControl(isLogin: $isLogin)
                         
-                        // Card blanco con el formulario
                         VStack(spacing: 20) {
                             if isLogin {
                                 LoginForm(
                                     userEmail: $loginEmail,
-                                    userPassword: $loginPassword
+                                    userPassword: $loginPassword,
+                                    isLoading: isLoading,
+                                    errorMessage: authError,
+                                    onLogin: handleLogin
                                 )
                             } else {
                                 RegisterForm(
@@ -57,20 +66,58 @@ struct AuthViewModel: View {
                         .cornerRadius(24)
                         .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 4)
                         
-                        // Textito abajo para cambiar entre Login/Register
                         AuthFooter(isLogin: $isLogin)
                         
-                        // Tip al estilo Aqua
                         TipCard()
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 32)
                 }
+                
+                // Overlay de loader global opcional (si querés oscurecer el fondo)
+                if isLoading {
+                    Color.black.opacity(0.15)
+                        .ignoresSafeArea()
+                    ProgressView("Logging in...")
+                        .padding(20)
+                        .background(Color.white)
+                        .cornerRadius(16)
+                }
+            }
+        }
+        // ✅ Cuando se loguea, mostramos el Home
+        .fullScreenCover(isPresented: $isAuthenticated) {
+            HomeViewModel()
+        }
+    }
+    
+    // MARK: - Lógica fake de login
+    
+    private func handleLogin() {
+        authError = nil
+        
+        guard !loginEmail.isEmpty, !loginPassword.isEmpty else {
+            authError = "Please enter email and password."
+            return
+        }
+        
+        isLoading = true
+        
+        // Simulamos delay de red (1.2s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            isLoading = false
+            
+            if loginEmail.lowercased() == demoEmail.lowercased(),
+               loginPassword == demoPassword {
+                // ✅ Login OK
+                isAuthenticated = true
+            } else {
+                // ❌ Error de credenciales
+                authError = "Invalid email or password."
             }
         }
     }
 }
-
 // MARK: - Header (similar al de Home)
 
 struct AuthHeader: View {
@@ -178,6 +225,10 @@ struct LoginForm: View {
     @Binding var userEmail: String
     @Binding var userPassword: String
     
+    var isLoading: Bool
+    var errorMessage: String?
+    var onLogin: () -> Void
+    
     var body: some View {
         VStack(spacing: 16) {
             
@@ -208,25 +259,39 @@ struct LoginForm: View {
             
             // Botón Log In
             Button {
-                print("Log In button tapped.")
+                onLogin()
             } label: {
-                Text("Log In")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(AquaUI.blue)
-                    .cornerRadius(14)
+                HStack {
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("Log In")
+                            .font(.headline)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(AquaUI.blue)
+                .foregroundColor(.white)
+                .cornerRadius(14)
             }
+            .disabled(isLoading)
             .padding(.top, 4)
             
-            // Texto "or login with"
+            // Mensaje de error
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            
             Text("or login with")
                 .font(.subheadline)
                 .foregroundColor(.black.opacity(0.6))
                 .padding(.top, 4)
             
-            // Botones sociales
             HStack(spacing: 12) {
                 Button {
                     // Google action
@@ -264,7 +329,6 @@ struct LoginForm: View {
         }
     }
 }
-
 // MARK: - Register Form (mismo estilo que Login form)
 
 struct RegisterForm: View {
