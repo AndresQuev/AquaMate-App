@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+import SwiftUI
+
 struct AuthViewModel: View {
     // Tabs
     @State private var isLogin: Bool = true
@@ -26,7 +28,7 @@ struct AuthViewModel: View {
     @State private var isLoading: Bool = false
     @State private var authError: String? = nil
     
-    // 💾 Credenciales de prueba
+    // 💾 Credenciales demo para el login directo
     private let demoEmail = "user@aquamate.com"
     private let demoPassword = "123456"
     
@@ -41,7 +43,9 @@ struct AuthViewModel: View {
                         
                         AuthHeader()
                         
+                        
                         AuthSegmentedControl(isLogin: $isLogin)
+                        
                         
                         VStack(spacing: 20) {
                             if isLogin {
@@ -57,28 +61,33 @@ struct AuthViewModel: View {
                                     email: $registerEmail,
                                     password: $registerPassword,
                                     confirmPassword: $registerConfirmPassword,
-                                    userName: $registerUserName
+                                    userName: $registerUserName,
+                                    isLoading: isLoading,
+                                    errorMessage: authError,
+                                    onRegister: handleRegister
                                 )
                             }
                         }
+                        
                         .padding(20)
                         .background(Color.white.opacity(0.95))
                         .cornerRadius(24)
                         .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 4)
                         
-                        AuthFooter(isLogin: $isLogin)
+                        
                         
                         TipCard()
+                        
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 32)
                 }
                 
-                // Overlay de loader global opcional (si querés oscurecer el fondo)
+                // Overlay de loader global
                 if isLoading {
                     Color.black.opacity(0.15)
                         .ignoresSafeArea()
-                    ProgressView("Logging in...")
+                    ProgressView("Please wait...")
                         .padding(20)
                         .background(Color.white)
                         .cornerRadius(16)
@@ -103,21 +112,75 @@ struct AuthViewModel: View {
         
         isLoading = true
         
-        // Simulamos delay de red (1.2s)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             isLoading = false
             
             if loginEmail.lowercased() == demoEmail.lowercased(),
                loginPassword == demoPassword {
-                // ✅ Login OK
-                isAuthenticated = true
+                
+                withAnimation(.easeInOut(duration: 0.35)) {
+                    isAuthenticated = true
+                }
             } else {
-                // ❌ Error de credenciales
                 authError = "Invalid email or password."
             }
         }
     }
+    
+    // MARK: - Lógica fake de registro con validaciones
+    
+    private func handleRegister() {
+        authError = nil
+        
+        // Campos vacíos
+        guard !registerEmail.isEmpty,
+              !registerPassword.isEmpty,
+              !registerConfirmPassword.isEmpty,
+              !registerUserName.isEmpty else {
+            authError = "All fields are required."
+            return
+        }
+        
+        // Email simple válido
+        guard isValidEmail(registerEmail) else {
+            authError = "Please enter a valid email."
+            return
+        }
+        
+        // Largo de contraseña
+        guard registerPassword.count >= 6 else {
+            authError = "Password must have at least 6 characters."
+            return
+        }
+        
+        // Coincidencia
+        guard registerPassword == registerConfirmPassword else {
+            authError = "Passwords do not match."
+            return
+        }
+        
+        isLoading = true
+        
+        // Simulamos llamada a servidor
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            isLoading = false
+            
+            // 🎉 Registro ok → lo logueamos directo
+            withAnimation(.easeInOut(duration: 0.35)) {
+                isAuthenticated = true
+            }
+        }
+    }
+    
+    // MARK: - Validación básica de email
+    
+    private func isValidEmail(_ email: String) -> Bool {
+        // Simple: algo@algo.algo
+        let pattern = #"^\S+@\S+\.\S+$"#
+        return email.range(of: pattern, options: .regularExpression) != nil
+    }
 }
+
 // MARK: - Header (similar al de Home)
 
 struct AuthHeader: View {
@@ -232,7 +295,6 @@ struct LoginForm: View {
     var body: some View {
         VStack(spacing: 16) {
             
-            // Email
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
                     .foregroundColor(.gray)
@@ -246,7 +308,6 @@ struct LoginForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
-            // Password
             HStack(spacing: 10) {
                 Image(systemName: "lock.fill")
                     .foregroundColor(.gray)
@@ -257,7 +318,6 @@ struct LoginForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
-            // Botón Log In
             Button {
                 onLogin()
             } label: {
@@ -279,7 +339,6 @@ struct LoginForm: View {
             .disabled(isLoading)
             .padding(.top, 4)
             
-            // Mensaje de error
             if let errorMessage = errorMessage {
                 Text(errorMessage)
                     .font(.footnote)
@@ -329,6 +388,7 @@ struct LoginForm: View {
         }
     }
 }
+
 // MARK: - Register Form (mismo estilo que Login form)
 
 struct RegisterForm: View {
@@ -337,10 +397,13 @@ struct RegisterForm: View {
     @Binding var confirmPassword: String
     @Binding var userName: String
     
+    var isLoading: Bool
+    var errorMessage: String?
+    var onRegister: () -> Void
+    
     var body: some View {
         VStack(spacing: 16) {
             
-            // Email
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
                     .foregroundColor(.gray)
@@ -354,7 +417,6 @@ struct RegisterForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
-            // Password
             HStack(spacing: 10) {
                 Image(systemName: "lock.fill")
                     .foregroundColor(.gray)
@@ -365,7 +427,6 @@ struct RegisterForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
-            // Confirm Password
             HStack(spacing: 10) {
                 Image(systemName: "lock.badge.checkmark.fill")
                     .foregroundColor(.gray)
@@ -376,7 +437,6 @@ struct RegisterForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
-            // User Name
             HStack(spacing: 10) {
                 Image(systemName: "person.fill")
                     .foregroundColor(.gray)
@@ -387,60 +447,38 @@ struct RegisterForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
-            // Botón Register
             Button {
-                print("Register button tapped.")
+                onRegister()
             } label: {
-                Text("Register")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(AquaUI.blue)
-                    .cornerRadius(14)
+                HStack {
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("Register")
+                            .font(.headline)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(AquaUI.blue)
+                .foregroundColor(.white)
+                .cornerRadius(14)
             }
+            .disabled(isLoading)
             .padding(.top, 4)
-        }
-    }
-}
-
-// MARK: - Footer: cambiar entre Login/Register (sin NavigationLink)
-
-struct AuthFooter: View {
-    @Binding var isLogin: Bool
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            if isLogin {
-                Text("Don't have an account?")
-                    .foregroundColor(.black.opacity(0.7))
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        isLogin = false
-                    }
-                } label: {
-                    Text("Create here")
-                        .bold()
-                        .foregroundColor(AquaUI.primaryGreen)
-                }
-                .buttonStyle(.plain)
-            } else {
-                Text("Already have an account?")
-                    .foregroundColor(.black.opacity(0.7))
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        isLogin = true
-                    }
-                } label: {
-                    Text("Log in here")
-                        .bold()
-                        .foregroundColor(AquaUI.primaryGreen)
-                }
-                .buttonStyle(.plain)
+            
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .font(.footnote)
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
 }
+
+
 
 // MARK: - Tip Card (estilo más parecido al Home)
 
