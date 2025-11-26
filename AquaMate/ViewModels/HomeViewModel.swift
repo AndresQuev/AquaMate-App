@@ -1,182 +1,232 @@
 import SwiftUI
 
-struct HomeViewModel: View {
+// MARK: - Paleta (aprox. Figma)
+
+struct AquaUI {
+    static let background      = Color(red: 0.94, green: 0.97, blue: 0.90) // verde muy claro
+    static let primaryGreen    = Color(red: 0.48, green: 0.63, blue: 0.24) // verde tab contenedor
+    static let secondaryGreen  = Color(red: 0.77, green: 0.85, blue: 0.52) // verde tab seleccionado / cards
+    static let blue            = Color(red: 0.35, green: 0.50, blue: 0.75) // botón / avatar
+    static let lightBlue       = Color(red: 0.84, green: 0.89, blue: 0.97)
+    static let softYellow      = Color(red: 0.98, green: 0.93, blue: 0.70)
+}
+
+// MARK: - Tabs
+
+enum HomeTab: String, CaseIterable {
+    case myPlants = "My plants"
+    case home = "Home"
+    case tips = "Tips"
+}
+
+// MARK: - Home (vista principal)
+
+struct HomeViewModel: View {   // dejo el nombre tal cual lo tenías
+    @State private var selectedTab: HomeTab = .home
+    
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    HomeHeader()       // Estilo parecido al LoginHeader
-                    SearchBar()        // Igual estilo que tus inputs
-                    TodayCareCard()    // Reemplaza al calendario
-                    MyPlantsSection()  // Carrusel de plantas
-                    HomeTip()          // Tip al estilo de tu componente Tip
+            ZStack {
+                AquaUI.background.ignoresSafeArea()
+                
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 24) {
+                        
+                        HomeTopHeader()
+                        
+                        HomeSegmentedControl(selectedTab: $selectedTab)
+                        
+                        GreetingBlock()
+                        
+                        SearchBar()
+                        
+                        TodayCareSection()
+                        
+                        MyPlantsSection()
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
                 }
-                .padding()
             }
-            .background(Color(.systemBackground))
         }
     }
 }
 
-// MARK: - Header de la Home (similar a LoginHeader)
+// MARK: - Header superior
 
-struct HomeHeader: View {
+struct HomeTopHeader: View {
     var body: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Aqua Mate")
-                    .bold()
-                    .font(.title)
-                    .foregroundStyle(.green)
-
-                Text("Don't let your plants dry out")
+                    .font(.title2.weight(.semibold))
+                    .foregroundColor(AquaUI.primaryGreen)
+                
+                Text("Don’t let your plants dry out")
                     .font(.subheadline)
-                    .foregroundColor(.gray)
-
-                Text("Hi, User 👋")
-                    .font(.headline)
-                    .foregroundColor(.black)
+                    .foregroundColor(.black.opacity(0.7))
             }
-
+            
             Spacer()
-
-            Image("AquaMateLogo") // Puedes usar "AquaMateLogo" o "Cactus"
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 70, height: 70)
+            
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [AquaUI.blue, AquaUI.lightBlue],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                Image(systemName: "person.fill")
+                    .foregroundColor(.white)
+                    .font(.system(size: 22, weight: .medium))
+            }
+            .frame(width: 46, height: 46)
         }
     }
 }
 
-// MARK: - Barra de búsqueda (mismo estilo que LoginForm)
+// MARK: - Segmented control
+
+struct HomeSegmentedControl: View {
+    @Binding var selectedTab: HomeTab
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(HomeTab.allCases, id: \.self) { tab in
+                Button {
+                    selectedTab = tab
+                } label: {
+                    Text(tab.rawValue)
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .foregroundColor(
+                            selectedTab == tab
+                            ? .black
+                            : .white
+                        )
+                        .background(
+                            Group {
+                                if selectedTab == tab {
+                                    RoundedRectangle(cornerRadius: 22)
+                                        .fill(AquaUI.secondaryGreen)
+                                } else {
+                                    Color.clear
+                                }
+                            }
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(
+            Capsule()
+                .fill(AquaUI.primaryGreen)
+        )
+    }
+}
+
+// MARK: - Saludo
+
+struct GreetingBlock: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Hi User 👋")
+                .font(.headline)
+                .foregroundColor(.black)
+            
+            Text("We have all the information about the plant you need.")
+                .font(.subheadline)
+                .foregroundColor(.black.opacity(0.6))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+// MARK: - SearchBar (adaptada al Figma)
 
 struct SearchBar: View {
     @State private var searchText: String = ""
-
+    
     var body: some View {
-        HStack {
+        HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.gray)
-
-            TextField("Search your plants...", text: $searchText)
-                .foregroundColor(.black)
+            
+            TextField("Search your plants", text: $searchText)
+                .font(.subheadline)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(10)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.white.opacity(0.6))
+        .cornerRadius(14)
     }
 }
 
-// MARK: - Tarjeta de cuidados de hoy (reemplazo del calendario)
+// MARK: - Today’s care
 
-struct TodayCareCard: View {
+struct TodayCareSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-
-            Text("Today's care")
-                .font(.title3)
-                .bold()
+            Text("Today’s care")
+                .font(.title3.weight(.semibold))
                 .foregroundColor(.black)
-
+            
             HStack(spacing: 16) {
-                TodayCareItem(
-                    icon: "drop.fill",
-                    title: "Water today",
-                    value: "3 plants",
-                    tint: .green
-                )
-
-                TodayCareItem(
-                    icon: "exclamationmark.triangle.fill",
-                    title: "Overdue",
-                    value: "1 plant",
-                    tint: .orange
-                )
-
-                TodayCareItem(
-                    icon: "leaf.fill",
-                    title: "Fertilize",
-                    value: "in 5 days",
-                    tint: .blue
-                )
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(AquaUI.secondaryGreen)
+                
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(AquaUI.softYellow)
+                
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(AquaUI.lightBlue)
             }
-
+            .frame(height: 90)
+            
             Button {
-                print("Add reminder tapped.")
+                print("Add reminder tapped")
             } label: {
                 Text("Add reminder")
-                    .bold()
+                    .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background(Color.green.opacity(0.8))
-                    .cornerRadius(10)
+                    .padding(.vertical, 12)
+                    .background(AquaUI.blue)
+                    .cornerRadius(14)
             }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(15)
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
 
-struct TodayCareItem: View {
-    let icon: String
-    let title: String
-    let value: String
-    let tint: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Image(systemName: icon)
-                .foregroundColor(tint)
-                .font(.headline)
-
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.gray)
-
-            Text(value)
-                .font(.subheadline)
-                .bold()
-                .foregroundColor(.black)
-        }
-        .padding(8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tint.opacity(0.08))
-        .cornerRadius(10)
-    }
-}
-
-// MARK: - Mis plantas (ajustada)
+// MARK: - My Plants
 
 struct MyPlantsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("My Plants")
-                .font(.title2)
-                .bold()
+                .font(.title2.weight(.semibold))
                 .foregroundColor(.black)
-
+            
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     PlantCard(
                         imageName: "PlantExample",
                         name: "Monstera",
-                        status: "Hydrated",
-                        statusColor: .green
+                        status: "Hydrated"
                     )
                     PlantCard(
                         imageName: "PlantExample2",
                         name: "Cactus",
-                        status: "In 3 days",
-                        statusColor: .orange
+                        status: "In 3 days"
                     )
                     PlantCard(
                         imageName: "PlantExample3",
                         name: "Fern",
-                        status: "Water now!",
-                        statusColor: .red
+                        status: "Water now!"
                     )
                 }
                 .padding(.vertical, 4)
@@ -189,55 +239,32 @@ struct PlantCard: View {
     let imageName: String
     let name: String
     let status: String
-    let statusColor: Color
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Contenedor para que todas las imágenes tengan mismo tamaño
             ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemGray6))
-
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color.white)
+                
                 Image(imageName)
                     .resizable()
-                    .scaledToFit()                // No recorta la planta
-                    .padding(10)                  // Deja aire dentro del cuadro
+                    .scaledToFit()
+                    .padding(14)
             }
-            .frame(width: 130, height: 130)       // Tamaño fijo
-            .clipped()
-
+            .frame(width: 140, height: 140)
+            
             Text(name)
                 .font(.headline)
                 .foregroundColor(.black)
-
+            
             Text(status)
                 .font(.caption)
-                .bold()
-                .foregroundColor(statusColor)
-        }
-        .padding(8)
-        .frame(width: 140, alignment: .leading)   // Todas las cards mismo ancho
-        .background(Color.white)
-        .cornerRadius(15)
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-    }
-}
-
-// MARK: - Tip de la Home (inspirado en tu Tip)
-
-struct HomeTip: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Did you know?")
-                .bold()
-                .font(.title3)
-                .foregroundStyle(.orange)
-
-            Text("Keeping a consistent watering schedule helps your plants grow stronger and healthier.")
-                .font(.subheadline)
                 .foregroundColor(.gray)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(8)
+        .background(Color.white.opacity(0.9))
+        .cornerRadius(18)
+        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
     }
 }
 

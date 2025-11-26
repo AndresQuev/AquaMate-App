@@ -11,11 +11,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		3294FFF22ED4DBFC0020F42E /* HomeViewModels */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = HomeViewModels;
-			sourceTree = "<group>";
-		};
 		329C6CC12EAFBCF1007F73FD /* AquaMate */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = AquaMate;
@@ -39,7 +34,6 @@
 			children = (
 				329C6CC12EAFBCF1007F73FD /* AquaMate */,
 				329C6CC02EAFBCF1007F73FD /* Products */,
-				3294FFF22ED4DBFC0020F42E /* HomeViewModels */,
 			);
 			sourceTree = "<group>";
 		};
@@ -67,7 +61,6 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				3294FFF22ED4DBFC0020F42E /* HomeViewModels */,
 				329C6CC12EAFBCF1007F73FD /* AquaMate */,
 			);
 			name = AquaMate;
