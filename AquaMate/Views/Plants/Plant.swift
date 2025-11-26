@@ -1,18 +1,36 @@
-//
-//  Plant.swift
-//  AquaMate
-//
-//  Created by Andrés Quevedo on 26/11/2025.
-//
-
 import SwiftUI
 
-struct Plant: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
+struct Plant: Identifiable {
+    let id = UUID()
+    let name: String
+    let imageName: String
+    let status: String
+    let wateringFrequencyDays: Int
+    let nextWateringText: String
 }
 
-#Preview {
-    Plant()
+extension Plant {
+    static let samplePlants: [Plant] = [
+        Plant(
+            name: "Monstera",
+            imageName: "PlantExample",
+            status: "Hydrated",
+            wateringFrequencyDays: 3,
+            nextWateringText: "In 3 days"
+        ),
+        Plant(
+            name: "Cactus",
+            imageName: "PlantExample2",
+            status: "In 3 days",
+            wateringFrequencyDays: 7,
+            nextWateringText: "In 3 days"
+        ),
+        Plant(
+            name: "Fern",
+            imageName: "PlantExample3",
+            status: "Water now!",
+            wateringFrequencyDays: 2,
+            nextWateringText: "Today"
+        )
+    ]
 }
