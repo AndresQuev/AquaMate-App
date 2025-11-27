@@ -1,5 +1,44 @@
 import SwiftUI
 
+// MARK: - ⚠️ PRE-REQUISITOS (Asegúrate de que estas structs existan en tu proyecto)
+
+/*
+// Necesitas la struct Plant (Ejemplo mínimo):
+struct Plant: Identifiable {
+    let id = UUID()
+    var name: String
+    var imageName: String
+    var status: String
+    var wateringFrequencyDays: Int
+    var nextWateringText: String
+    
+    static let samplePlants = [
+        Plant(name: "Monstera", imageName: "PlantExample", status: "Water now!", wateringFrequencyDays: 7, nextWateringText: "Today"),
+        Plant(name: "Fiddle Leaf Fig", imageName: "PlantExample2", status: "Hydrated", wateringFrequencyDays: 14, nextWateringText: "In 7 days"),
+        Plant(name: "Snake Plant", imageName: "PlantExample3", status: "In days", wateringFrequencyDays: 21, nextWateringText: "In 14 days")
+    ]
+}
+
+// Necesitas la struct TipCard (Ejemplo mínimo):
+struct TipCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Did you know?")
+                .font(.headline)
+                .foregroundColor(.orange)
+            
+            Text("Keeping a regular watering schedule helps your plants grow healthier and stronger.")
+                .font(.subheadline)
+                .foregroundColor(.black.opacity(0.7))
+            }
+        .padding(16)
+        .background(AquaUI.softYellow)
+        .cornerRadius(18)
+        .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 3)
+    }
+}
+*/
+
 // MARK: - 🎨 Paleta de Colores (AquaUI)
 
 struct AquaUI {
@@ -19,19 +58,39 @@ enum HomeTab: String, CaseIterable {
     case tips = "Tips"
 }
 
+// MARK: - 🏷️ Sidebar Navigation Tags (NUEVO)
+
+enum SidebarTag: String, CaseIterable, Identifiable {
+    case profile, settings, helpFAQ
+    
+    var id: String { rawValue }
+    
+    // Helper para mapear la etiqueta a la vista de destino
+    @ViewBuilder
+    func view() -> some View {
+        switch self {
+        case .profile: ProfileView()
+        case .settings: SettingsView()
+        case .helpFAQ: HelpFAQView()
+        }
+    }
+}
+
+
 // MARK: - 🏠 HomeViewModel (Vista Principal con Sidebar)
 
 struct HomeViewModel: View {
     @State private var selectedTab: HomeTab = .home
-    // ⚠️ Depende de que 'Plant' esté disponible globalmente.
     @State private var plants: [Plant] = Plant.samplePlants
     
     // 💡 Estado para controlar la apertura/cierre de la barra lateral
     @State private var isSidebarOpen: Bool = false
     
+    // ❗ NUEVO: Estado para activar la navegación desde el Sidebar
+    @State private var activeLink: SidebarTag? = nil
+    
     var body: some View {
         GeometryReader { geometry in
-            // ❗ Cambiamos la alineación principal a la derecha
             ZStack(alignment: .trailing) {
                 
                 // 1. Contenido Principal (con NavigationStack)
@@ -42,7 +101,6 @@ struct HomeViewModel: View {
                         ScrollView(.vertical, showsIndicators: false) {
                             VStack(alignment: .leading, spacing: 24) {
                                 
-                                // El header con el botón de perfil sigue a la derecha
                                 HomeTopHeader(isSidebarOpen: $isSidebarOpen)
                                 HomeSegmentedControl(selectedTab: $selectedTab)
                                 
@@ -62,9 +120,17 @@ struct HomeViewModel: View {
                             .padding(.top, 24)
                             .padding(.bottom, 24)
                         }
+                        
+                        // ❗ NUEVO: NavigationLinks ocultos que son activados al setear activeLink
+                        ForEach(SidebarTag.allCases) { tag in
+                            NavigationLink(destination: tag.view(), tag: tag, selection: $activeLink) {
+                                EmptyView()
+                            }
+                        }
+                        .opacity(0) // Ocultamos los NavigationLinks
                     }
                 }
-                // ❗ Aplicamos offset negativo para mover la vista principal a la izquierda
+                // Aplicamos offset negativo para mover la vista principal a la izquierda
                 .offset(x: isSidebarOpen ? -geometry.size.width * 0.75 : 0)
                 // Oscurecemos y cerramos al tocar fuera
                 .disabled(isSidebarOpen)
@@ -76,9 +142,9 @@ struct HomeViewModel: View {
                 
                 // 2. Barra Lateral (Sidebar)
                 if isSidebarOpen {
-                    SidebarView(isSidebarOpen: $isSidebarOpen)
+                    // ❗ Pasamos el binding del activeLink
+                    SidebarView(isSidebarOpen: $isSidebarOpen, activeLink: $activeLink)
                         .frame(width: geometry.size.width * 0.75)
-                        // ❗ Animación para que entre desde la derecha
                         .transition(.move(edge: .trailing))
                 }
             }
@@ -90,13 +156,14 @@ struct HomeViewModel: View {
 
 struct SidebarView: View {
     @Binding var isSidebarOpen: Bool
+    // ❗ NUEVO: Recibe el binding para activar la navegación
+    @Binding var activeLink: SidebarTag?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             
             // Header con botón de cierre
             HStack {
-                // Título
                 Text("Opciones")
                     .font(.largeTitle.bold())
                     .foregroundColor(AquaUI.primaryGreen)
@@ -116,24 +183,27 @@ struct SidebarView: View {
             .padding(.top, 50)
             
             // Resto de los botones del menú
+            
+            // ❗ Implementación de navegación
             SidebarButton(title: "Mi Perfil", icon: "person.circle.fill") {
-                print("Ir a Perfil")
+                activeLink = .profile
                 withAnimation { isSidebarOpen = false }
             }
             
             SidebarButton(title: "Ajustes", icon: "gear") {
-                print("Ir a Ajustes")
+                activeLink = .settings
                 withAnimation { isSidebarOpen = false }
             }
             
             SidebarButton(title: "Ayuda (FAQ)", icon: "questionmark.circle.fill") {
-                print("Ir a Ayuda")
+                activeLink = .helpFAQ
                 withAnimation { isSidebarOpen = false }
             }
             
             Spacer()
             
             SidebarButton(title: "Cerrar Sesión", icon: "arrow.backward.to.line") {
+                // Lógica real de Logout
                 print("Cerrar Sesión")
                 withAnimation { isSidebarOpen = false }
             }
@@ -172,10 +242,73 @@ struct SidebarButton: View {
 }
 
 
-// MARK: - Header superior (SIN CAMBIOS ESTÉTICOS)
+// MARK: - 📍 Vistas de Destino (Placeholders) (NUEVO)
+
+struct ProfileView: View {
+    var body: some View {
+        ZStack {
+            AquaUI.background.ignoresSafeArea()
+            VStack {
+                Image(systemName: "person.crop.circle.badge.checkmark")
+                    .font(.largeTitle)
+                    .foregroundColor(AquaUI.primaryGreen)
+                Text("Mi Perfil")
+                    .font(.title.bold())
+                Text("Aquí irían los detalles del usuario y sus estadísticas.")
+                    .font(.subheadline)
+            }
+            .padding()
+        }
+        .navigationTitle("Mi Perfil")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct SettingsView: View {
+    var body: some View {
+        ZStack {
+            AquaUI.background.ignoresSafeArea()
+            VStack {
+                Image(systemName: "gearshape.fill")
+                    .font(.largeTitle)
+                    .foregroundColor(AquaUI.primaryGreen)
+                Text("Ajustes")
+                    .font(.title.bold())
+                Text("Aquí irían las opciones de configuración de la app.")
+                    .font(.subheadline)
+            }
+            .padding()
+        }
+        .navigationTitle("Ajustes")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct HelpFAQView: View {
+    var body: some View {
+        ZStack {
+            AquaUI.background.ignoresSafeArea()
+            VStack {
+                Image(systemName: "questionmark.circle.fill")
+                    .font(.largeTitle)
+                    .foregroundColor(AquaUI.primaryGreen)
+                Text("Ayuda (FAQ)")
+                    .font(.title.bold())
+                Text("Aquí irían las preguntas frecuentes y el soporte.")
+                    .font(.subheadline)
+            }
+            .padding()
+        }
+        .navigationTitle("Ayuda")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+
+// MARK: - El resto de tu código (Sin cambios estéticos)
+// (Mantengo estas secciones para que el código sea completo y funcional)
 
 struct HomeTopHeader: View {
-    // ❗ Binding para abrir el menú
     @Binding var isSidebarOpen: Bool
     
     var body: some View {
@@ -192,10 +325,9 @@ struct HomeTopHeader: View {
             
             Spacer()
             
-            // Botón de perfil (en la derecha, como lo tenías)
             Button {
                 withAnimation(.easeOut) {
-                    isSidebarOpen.toggle() // Abre/Cierra el menú
+                    isSidebarOpen.toggle()
                 }
             } label: {
                 ZStack {
@@ -217,10 +349,6 @@ struct HomeTopHeader: View {
         }
     }
 }
-
-
-// MARK: - Segmented control
-// (El resto del código de la aplicación permanece sin cambios)
 
 struct HomeSegmentedControl: View {
     @Binding var selectedTab: HomeTab
@@ -264,8 +392,6 @@ struct HomeSegmentedControl: View {
     }
 }
 
-// MARK: - Saludo
-
 struct GreetingBlock: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -280,8 +406,6 @@ struct GreetingBlock: View {
         }
     }
 }
-
-// MARK: - SearchBar (adaptada al Figma)
 
 struct SearchBar: View {
     @State private var searchText: String = ""
@@ -300,8 +424,6 @@ struct SearchBar: View {
         .cornerRadius(14)
     }
 }
-
-// MARK: - Today’s care
 
 struct TodayCareSection: View {
     var body: some View {
@@ -336,8 +458,6 @@ struct TodayCareSection: View {
         }
     }
 }
-
-// MARK: - My Plants
 
 struct MyPlantsSection: View {
     @Binding var plants: [Plant]
@@ -386,7 +506,6 @@ struct PlantCard: View {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.white)
                 
-                // Nota: Asumo que tienes imágenes llamadas "PlantExample", "PlantExample2", etc.
                 Image(plant.imageName)
                     .resizable()
                     .scaledToFit()
@@ -461,7 +580,7 @@ struct MyPlantsListView: View {
             }
             Spacer()
         }
-        .padding(.horizontal, -24) // Compensamos el padding de la HomeView si se usa como raíz
+        .padding(.horizontal, -24)
         .padding(.top, 0)
         .navigationTitle("All Plants")
         .navigationBarTitleDisplayMode(.inline)
@@ -562,7 +681,6 @@ struct PlantDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     
-    // Colores según estado
     private var statusBackground: Color {
         if plant.status.lowercased().contains("water") {
             return AquaUI.softYellow
@@ -709,7 +827,6 @@ struct AddPlantView: View {
             return
         }
         
-        // Definimos un texto simple para el próximo riego
         let nextWateringText = "In \(wateringFrequency) days"
         
         let newPlant = Plant(
@@ -782,6 +899,7 @@ struct TipsScreen: View {
         }
     }
 }
+
 
 // MARK: - Preview
 
