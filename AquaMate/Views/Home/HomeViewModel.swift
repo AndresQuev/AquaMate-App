@@ -1,43 +1,11 @@
 import SwiftUI
 
-// MARK: - ⚠️ PRE-REQUISITOS (Asegúrate de que estas structs existan en tu proyecto)
+// MARK: - ⚠️ PRE-REQUISITOS (Plant + TipCard incluidos aquí para que el archivo sea autocontenido)
 
-/*
-// Necesitas la struct Plant (Ejemplo mínimo):
-struct Plant: Identifiable {
-    let id = UUID()
-    var name: String
-    var imageName: String
-    var status: String
-    var wateringFrequencyDays: Int
-    var nextWateringText: String
-    
-    static let samplePlants = [
-        Plant(name: "Monstera", imageName: "PlantExample", status: "Water now!", wateringFrequencyDays: 7, nextWateringText: "Today"),
-        Plant(name: "Fiddle Leaf Fig", imageName: "PlantExample2", status: "Hydrated", wateringFrequencyDays: 14, nextWateringText: "In 7 days"),
-        Plant(name: "Snake Plant", imageName: "PlantExample3", status: "In days", wateringFrequencyDays: 21, nextWateringText: "In 14 days")
-    ]
-}
+// Modelo
 
-// Necesitas la struct TipCard (Ejemplo mínimo):
-struct TipCard: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Did you know?")
-                .font(.headline)
-                .foregroundColor(.orange)
-            
-            Text("Keeping a regular watering schedule helps your plants grow healthier and stronger.")
-                .font(.subheadline)
-                .foregroundColor(.black.opacity(0.7))
-            }
-        .padding(16)
-        .background(AquaUI.softYellow)
-        .cornerRadius(18)
-        .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 3)
-    }
-}
-*/
+
+// TipCard mínimo
 
 // MARK: - 🎨 Paleta de Colores (AquaUI)
 
@@ -58,14 +26,11 @@ enum HomeTab: String, CaseIterable {
     case tips = "Tips"
 }
 
-// MARK: - 🏷️ Sidebar Navigation Tags (NUEVO)
+// MARK: - 🏷️ Sidebar Navigation Tags
 
 enum SidebarTag: String, CaseIterable, Identifiable {
     case profile, settings, helpFAQ
-    
     var id: String { rawValue }
-    
-    // Helper para mapear la etiqueta a la vista de destino
     @ViewBuilder
     func view() -> some View {
         switch self {
@@ -76,18 +41,27 @@ enum SidebarTag: String, CaseIterable, Identifiable {
     }
 }
 
-
-// MARK: - 🏠 HomeViewModel (Vista Principal con Sidebar)
+// MARK: - 🏠 HomeViewModel (Vista Principal con Sidebar + búsqueda funcional)
 
 struct HomeViewModel: View {
     @State private var selectedTab: HomeTab = .home
     @State private var plants: [Plant] = Plant.samplePlants
-    
-    // 💡 Estado para controlar la apertura/cierre de la barra lateral
     @State private var isSidebarOpen: Bool = false
-    
-    // ❗ NUEVO: Estado para activar la navegación desde el Sidebar
     @State private var activeLink: SidebarTag? = nil
+    
+    // Texto de búsqueda centralizado
+    @State private var searchText: String = ""
+    
+    // Filtrado por nombre (case-insensitive)
+    private var filteredPlants: [Plant] {
+        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return plants
+        } else {
+            return plants.filter { plant in
+                plant.name.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -108,9 +82,9 @@ struct HomeViewModel: View {
                                 Group {
                                     switch selectedTab {
                                     case .home:
-                                        HomeMainSection(plants: $plants)
+                                        HomeMainSection(plants: $plants, searchText: $searchText, filteredPlants: filteredPlants)
                                     case .myPlants:
-                                        MyPlantsListView(plants: $plants)
+                                        MyPlantsListView(plants: $plants, filteredPlants: filteredPlants)
                                     case .tips:
                                         TipsScreen()
                                     }
@@ -121,18 +95,17 @@ struct HomeViewModel: View {
                             .padding(.bottom, 24)
                         }
                         
-                        // ❗ NUEVO: NavigationLinks ocultos que son activados al setear activeLink
+                        // NavigationLinks ocultos que son activados al setear activeLink
                         ForEach(SidebarTag.allCases) { tag in
                             NavigationLink(destination: tag.view(), tag: tag, selection: $activeLink) {
                                 EmptyView()
                             }
                         }
-                        .opacity(0) // Ocultamos los NavigationLinks
+                        .opacity(0)
                     }
                 }
-                // Aplicamos offset negativo para mover la vista principal a la izquierda
+                // Aplicamos offset negativo para mover la vista principal a la izquierda cuando abre sidebar
                 .offset(x: isSidebarOpen ? -geometry.size.width * 0.75 : 0)
-                // Oscurecemos y cerramos al tocar fuera
                 .disabled(isSidebarOpen)
                 .onTapGesture {
                     if isSidebarOpen {
@@ -142,7 +115,6 @@ struct HomeViewModel: View {
                 
                 // 2. Barra Lateral (Sidebar)
                 if isSidebarOpen {
-                    // ❗ Pasamos el binding del activeLink
                     SidebarView(isSidebarOpen: $isSidebarOpen, activeLink: $activeLink)
                         .frame(width: geometry.size.width * 0.75)
                         .transition(.move(edge: .trailing))
@@ -156,21 +128,15 @@ struct HomeViewModel: View {
 
 struct SidebarView: View {
     @Binding var isSidebarOpen: Bool
-    // ❗ NUEVO: Recibe el binding para activar la navegación
     @Binding var activeLink: SidebarTag?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            
-            // Header con botón de cierre
             HStack {
                 Text("Opciones")
                     .font(.largeTitle.bold())
                     .foregroundColor(AquaUI.primaryGreen)
-                
                 Spacer()
-                
-                // Botón de cierre explícito
                 Button {
                     withAnimation { isSidebarOpen = false }
                 } label: {
@@ -182,9 +148,6 @@ struct SidebarView: View {
             }
             .padding(.top, 50)
             
-            // Resto de los botones del menú
-            
-            // ❗ Implementación de navegación
             SidebarButton(title: "Mi Perfil", icon: "person.circle.fill") {
                 activeLink = .profile
                 withAnimation { isSidebarOpen = false }
@@ -203,7 +166,7 @@ struct SidebarView: View {
             Spacer()
             
             SidebarButton(title: "Cerrar Sesión", icon: "arrow.backward.to.line") {
-                // Lógica real de Logout
+                // Aquí podés implementar logout real
                 print("Cerrar Sesión")
                 withAnimation { isSidebarOpen = false }
             }
@@ -214,7 +177,7 @@ struct SidebarView: View {
         .padding(.horizontal, 24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(AquaUI.background)
-        .shadow(color: .black.opacity(0.2), radius: 10, x: -5, y: 0) // Sombra ajustada a la izquierda
+        .shadow(color: .black.opacity(0.2), radius: 10, x: -5, y: 0)
     }
 }
 
@@ -241,8 +204,7 @@ struct SidebarButton: View {
     }
 }
 
-
-// MARK: - 📍 Vistas de Destino (Placeholders) (NUEVO)
+// MARK: - 📍 Vistas de Destino (Placeholders)
 
 struct ProfileView: View {
     var body: some View {
@@ -304,10 +266,9 @@ struct HelpFAQView: View {
     }
 }
 
+// MARK: - El resto de tu código con búsqueda funcional
 
-// MARK: - El resto de tu código (Sin cambios estéticos)
-// (Mantengo estas secciones para que el código sea completo y funcional)
-
+// Home header con botón que abre sidebar
 struct HomeTopHeader: View {
     @Binding var isSidebarOpen: Bool
     
@@ -407,8 +368,9 @@ struct GreetingBlock: View {
     }
 }
 
+// SearchBar ahora recibe binding al searchText centralizado
 struct SearchBar: View {
-    @State private var searchText: String = ""
+    @Binding var searchText: String
     
     var body: some View {
         HStack(spacing: 8) {
@@ -417,6 +379,7 @@ struct SearchBar: View {
             
             TextField("Search your plants", text: $searchText)
                 .font(.subheadline)
+                .textInputAutocapitalization(.never)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -459,8 +422,10 @@ struct TodayCareSection: View {
     }
 }
 
+// MyPlantsSection usa filteredPlants (no todos)
 struct MyPlantsSection: View {
     @Binding var plants: [Plant]
+    let filteredPlants: [Plant]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -472,7 +437,7 @@ struct MyPlantsSection: View {
                 Spacer()
                 
                 NavigationLink {
-                    MyPlantsListView(plants: $plants)
+                    MyPlantsListView(plants: $plants, filteredPlants: filteredPlants)
                 } label: {
                     Text("See all")
                         .font(.subheadline.weight(.semibold))
@@ -482,7 +447,7 @@ struct MyPlantsSection: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
-                    ForEach(plants) { plant in
+                    ForEach(filteredPlants) { plant in
                         NavigationLink {
                             PlantDetailView(plant: plant)
                         } label: {
@@ -528,8 +493,10 @@ struct PlantCard: View {
     }
 }
 
+// MyPlantsListView recibe binding de plants (para add) y la lista filtrada para mostrar
 struct MyPlantsListView: View {
     @Binding var plants: [Plant]
+    let filteredPlants: [Plant]
     
     private let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -569,7 +536,7 @@ struct MyPlantsListView: View {
             }
             
             LazyVGrid(columns: columns, spacing: 16) {
-                ForEach(plants) { plant in
+                ForEach(filteredPlants) { plant in
                     NavigationLink {
                         PlantDetailView(plant: plant)
                     } label: {
@@ -623,8 +590,8 @@ struct PlantDetailView: View {
                                 .font(.caption.weight(.semibold))
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(statusBackground)
-                                .foregroundColor(statusTextColor)
+                                .background(statusBackground(for: plant))
+                                .foregroundColor(statusTextColor(for: plant))
                                 .cornerRadius(12)
                         }
                         
@@ -681,7 +648,7 @@ struct PlantDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     
-    private var statusBackground: Color {
+    private func statusBackground(for plant: Plant) -> Color {
         if plant.status.lowercased().contains("water") {
             return AquaUI.softYellow
         } else {
@@ -689,7 +656,7 @@ struct PlantDetailView: View {
         }
     }
     
-    private var statusTextColor: Color {
+    private func statusTextColor(for plant: Plant) -> Color {
         return .black
     }
 }
@@ -873,13 +840,15 @@ struct InfoChip: View {
 
 struct HomeMainSection: View {
     @Binding var plants: [Plant]
+    @Binding var searchText: String
+    let filteredPlants: [Plant]
     
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             GreetingBlock()
-            SearchBar()
+            SearchBar(searchText: $searchText)
             TodayCareSection()
-            MyPlantsSection(plants: $plants)
+            MyPlantsSection(plants: $plants, filteredPlants: filteredPlants)
         }
     }
 }
@@ -899,7 +868,6 @@ struct TipsScreen: View {
         }
     }
 }
-
 
 // MARK: - Preview
 
