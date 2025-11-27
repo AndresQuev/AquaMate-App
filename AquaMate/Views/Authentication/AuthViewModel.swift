@@ -1,12 +1,3 @@
-//
-//  AuthViewModel.swift
-//  AquaMate
-//
-//  Created by Andrés Quevedo on 27/10/2025.
-//
-
-import SwiftUI
-
 import SwiftUI
 
 struct AuthViewModel: View {
@@ -35,17 +26,17 @@ struct AuthViewModel: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                // Fondo
                 AquaUI.background
                     .ignoresSafeArea()
                 
+                // Contenido principal
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 24) {
                         
                         AuthHeader()
                         
-                        
                         AuthSegmentedControl(isLogin: $isLogin)
-                        
                         
                         VStack(spacing: 20) {
                             if isLogin {
@@ -68,13 +59,10 @@ struct AuthViewModel: View {
                                 )
                             }
                         }
-                        
                         .padding(20)
                         .background(Color.white.opacity(0.95))
                         .cornerRadius(24)
                         .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 4)
-                        
-                        
                         
                         TipCard()
                         
@@ -181,11 +169,12 @@ struct AuthViewModel: View {
     }
 }
 
-// MARK: - Header (similar al de Home)
+// MARK: - Auth Header (Ajustado para mejor centrado)
 
 struct AuthHeader: View {
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
+        VStack(alignment: .center, spacing: 16) {
+            // Logo y Círculo
             ZStack {
                 Circle()
                     .fill(
@@ -195,28 +184,27 @@ struct AuthHeader: View {
                             endPoint: .bottomTrailing
                         )
                     )
+                    .frame(width:120,height:120)
                 Image("AquaMateLogo")
                     .resizable()
                     .scaledToFit()
-                    .padding(8)
+                    .padding(10)
             }
-            .frame(width: 70, height: 70)
-            
-            VStack(alignment: .leading, spacing: 4) {
+            .frame(width: 70, height: 70) // Contenedor del logo, centrado por defecto
+            Spacer()
+            // Títulos
+            VStack(alignment: .center, spacing: 4) { // Cambiado a .center para centrar textos
                 Text("Aqua Mate")
-                    .font(.title2.weight(.semibold))
+                    .font(.largeTitle.weight(.semibold))
                     .foregroundColor(AquaUI.primaryGreen)
+                    // .padding() // Eliminado padding innecesario aquí
                 
                 Text("Don’t let your plants dry out")
                     .font(.subheadline)
                     .foregroundColor(.black.opacity(0.7))
-                
-                Text("Welcome back 👋")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundColor(.black)
+                    // .padding() // Eliminado padding innecesario aquí
             }
-            
-            Spacer()
+            // .padding(.top, 16) // Añadir espacio si es necesario después del logo
         }
     }
 }
@@ -282,7 +270,7 @@ struct AuthSegmentedControl: View {
     }
 }
 
-// MARK: - Login Form (adaptado al estilo Home/SearchBar)
+// MARK: - Login Form
 
 struct LoginForm: View {
     @Binding var userEmail: String
@@ -295,6 +283,7 @@ struct LoginForm: View {
     var body: some View {
         VStack(spacing: 16) {
             
+            // Campo Email
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
                     .foregroundColor(.gray)
@@ -308,6 +297,7 @@ struct LoginForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
+            // Campo Contraseña
             HStack(spacing: 10) {
                 Image(systemName: "lock.fill")
                     .foregroundColor(.gray)
@@ -318,6 +308,7 @@ struct LoginForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
+            // Botón Login
             Button {
                 onLogin()
             } label: {
@@ -339,6 +330,7 @@ struct LoginForm: View {
             .disabled(isLoading)
             .padding(.top, 4)
             
+            // Mensaje de Error
             if let errorMessage = errorMessage {
                 Text(errorMessage)
                     .font(.footnote)
@@ -351,6 +343,7 @@ struct LoginForm: View {
                 .foregroundColor(.black.opacity(0.6))
                 .padding(.top, 4)
             
+            // Opciones de Login Social
             HStack(spacing: 12) {
                 Button {
                     // Google action
@@ -359,8 +352,10 @@ struct LoginForm: View {
                         Image("GoogleIcon")
                             .resizable()
                             .frame(width: 18, height: 18)
+                        
                         Text("Google")
                             .font(.subheadline.weight(.semibold))
+                            .foregroundColor(.black)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)
@@ -389,7 +384,7 @@ struct LoginForm: View {
     }
 }
 
-// MARK: - Register Form (mismo estilo que Login form)
+// MARK: - Register Form
 
 struct RegisterForm: View {
     @Binding var email: String
@@ -404,6 +399,7 @@ struct RegisterForm: View {
     var body: some View {
         VStack(spacing: 16) {
             
+            // Campo Email
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
                     .foregroundColor(.gray)
@@ -417,6 +413,7 @@ struct RegisterForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
+            // Campo Contraseña
             HStack(spacing: 10) {
                 Image(systemName: "lock.fill")
                     .foregroundColor(.gray)
@@ -427,6 +424,7 @@ struct RegisterForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
+            // Campo Confirmar Contraseña
             HStack(spacing: 10) {
                 Image(systemName: "lock.badge.checkmark.fill")
                     .foregroundColor(.gray)
@@ -437,6 +435,7 @@ struct RegisterForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
+            // Campo Nombre de Usuario
             HStack(spacing: 10) {
                 Image(systemName: "person.fill")
                     .foregroundColor(.gray)
@@ -447,6 +446,7 @@ struct RegisterForm: View {
             .background(Color.white.opacity(0.9))
             .cornerRadius(14)
             
+            // Botón Register
             Button {
                 onRegister()
             } label: {
@@ -468,6 +468,7 @@ struct RegisterForm: View {
             .disabled(isLoading)
             .padding(.top, 4)
             
+            // Mensaje de Error
             if let errorMessage = errorMessage {
                 Text(errorMessage)
                     .font(.footnote)
@@ -478,9 +479,7 @@ struct RegisterForm: View {
     }
 }
 
-
-
-// MARK: - Tip Card (estilo más parecido al Home)
+// MARK: - Tip Card
 
 struct TipCard: View {
     var body: some View {
@@ -492,7 +491,7 @@ struct TipCard: View {
             Text("Keeping a regular watering schedule helps your plants grow healthier and stronger.")
                 .font(.subheadline)
                 .foregroundColor(.black.opacity(0.7))
-        }
+            }
         .padding(16)
         .background(AquaUI.softYellow)
         .cornerRadius(18)

@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Paleta (aprox. Figma)
+// MARK: - 🎨 Paleta de Colores (AquaUI)
 
 struct AquaUI {
     static let background      = Color(red: 0.94, green: 0.97, blue: 0.90) // verde muy claro
@@ -11,7 +11,7 @@ struct AquaUI {
     static let softYellow      = Color(red: 0.98, green: 0.93, blue: 0.70)
 }
 
-// MARK: - Tabs
+// MARK: - 🧭 Definición de Tabs
 
 enum HomeTab: String, CaseIterable {
     case myPlants = "My plants"
@@ -19,53 +19,170 @@ enum HomeTab: String, CaseIterable {
     case tips = "Tips"
 }
 
-// MARK: - Home (vista principal)
+// MARK: - 🏠 HomeViewModel (Vista Principal con Sidebar)
 
 struct HomeViewModel: View {
     @State private var selectedTab: HomeTab = .home
+    // ⚠️ Depende de que 'Plant' esté disponible globalmente.
     @State private var plants: [Plant] = Plant.samplePlants
     
+    // 💡 Estado para controlar la apertura/cierre de la barra lateral
+    @State private var isSidebarOpen: Bool = false
+    
     var body: some View {
-        NavigationStack {
-            ZStack {
-                AquaUI.background.ignoresSafeArea()
+        GeometryReader { geometry in
+            // ❗ Cambiamos la alineación principal a la derecha
+            ZStack(alignment: .trailing) {
                 
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
+                // 1. Contenido Principal (con NavigationStack)
+                NavigationStack {
+                    ZStack {
+                        AquaUI.background.ignoresSafeArea()
                         
-                        HomeTopHeader()
-                        HomeSegmentedControl(selectedTab: $selectedTab)
-                        
-                        // 👇 Contenido según la pestaña
-                        Group {
-                            switch selectedTab {
-                            case .home:
-                                HomeMainSection(plants: $plants)
-                            case .myPlants:
-                                MyPlantsListView(plants: $plants)
-                            case .tips:
-                                TipsScreen()
+                        ScrollView(.vertical, showsIndicators: false) {
+                            VStack(alignment: .leading, spacing: 24) {
+                                
+                                // El header con el botón de perfil sigue a la derecha
+                                HomeTopHeader(isSidebarOpen: $isSidebarOpen)
+                                HomeSegmentedControl(selectedTab: $selectedTab)
+                                
+                                // Contenido según la pestaña
+                                Group {
+                                    switch selectedTab {
+                                    case .home:
+                                        HomeMainSection(plants: $plants)
+                                    case .myPlants:
+                                        MyPlantsListView(plants: $plants)
+                                    case .tips:
+                                        TipsScreen()
+                                    }
+                                }
                             }
-
+                            .padding(.horizontal, 24)
+                            .padding(.top, 24)
+                            .padding(.bottom, 24)
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 24)
-                    .padding(.bottom, 24)
+                }
+                // ❗ Aplicamos offset negativo para mover la vista principal a la izquierda
+                .offset(x: isSidebarOpen ? -geometry.size.width * 0.75 : 0)
+                // Oscurecemos y cerramos al tocar fuera
+                .disabled(isSidebarOpen)
+                .onTapGesture {
+                    if isSidebarOpen {
+                        withAnimation(.easeOut) { isSidebarOpen = false }
+                    }
+                }
+                
+                // 2. Barra Lateral (Sidebar)
+                if isSidebarOpen {
+                    SidebarView(isSidebarOpen: $isSidebarOpen)
+                        .frame(width: geometry.size.width * 0.75)
+                        // ❗ Animación para que entre desde la derecha
+                        .transition(.move(edge: .trailing))
                 }
             }
         }
     }
 }
 
-// MARK: - Header superior
+// MARK: - 👤 Sidebar y Componentes
+
+struct SidebarView: View {
+    @Binding var isSidebarOpen: Bool
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            
+            // Header con botón de cierre
+            HStack {
+                // Título
+                Text("Opciones")
+                    .font(.largeTitle.bold())
+                    .foregroundColor(AquaUI.primaryGreen)
+                
+                Spacer()
+                
+                // Botón de cierre explícito
+                Button {
+                    withAnimation { isSidebarOpen = false }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.gray)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 50)
+            
+            // Resto de los botones del menú
+            SidebarButton(title: "Mi Perfil", icon: "person.circle.fill") {
+                print("Ir a Perfil")
+                withAnimation { isSidebarOpen = false }
+            }
+            
+            SidebarButton(title: "Ajustes", icon: "gear") {
+                print("Ir a Ajustes")
+                withAnimation { isSidebarOpen = false }
+            }
+            
+            SidebarButton(title: "Ayuda (FAQ)", icon: "questionmark.circle.fill") {
+                print("Ir a Ayuda")
+                withAnimation { isSidebarOpen = false }
+            }
+            
+            Spacer()
+            
+            SidebarButton(title: "Cerrar Sesión", icon: "arrow.backward.to.line") {
+                print("Cerrar Sesión")
+                withAnimation { isSidebarOpen = false }
+            }
+            .foregroundColor(.red)
+            
+            Spacer().frame(height: 30)
+        }
+        .padding(.horizontal, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(AquaUI.background)
+        .shadow(color: .black.opacity(0.2), radius: 10, x: -5, y: 0) // Sombra ajustada a la izquierda
+    }
+}
+
+struct SidebarButton: View {
+    let title: String
+    let icon: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .frame(width: 24)
+                Text(title)
+                    .font(.headline)
+                Spacer()
+            }
+            .padding(.vertical, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundColor(.black)
+    }
+}
+
+
+// MARK: - Header superior (SIN CAMBIOS ESTÉTICOS)
 
 struct HomeTopHeader: View {
+    // ❗ Binding para abrir el menú
+    @Binding var isSidebarOpen: Bool
+    
     var body: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Aqua Mate")
-                    .font(.title2.weight(.semibold))
+                    .font(.title.weight(.semibold))
                     .foregroundColor(AquaUI.primaryGreen)
                 
                 Text("Don’t let your plants dry out")
@@ -75,25 +192,35 @@ struct HomeTopHeader: View {
             
             Spacer()
             
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [AquaUI.blue, AquaUI.lightBlue],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+            // Botón de perfil (en la derecha, como lo tenías)
+            Button {
+                withAnimation(.easeOut) {
+                    isSidebarOpen.toggle() // Abre/Cierra el menú
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [AquaUI.blue, AquaUI.lightBlue],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-                Image(systemName: "person.fill")
-                    .foregroundColor(.white)
-                    .font(.system(size: 22, weight: .medium))
+                    Image(systemName: "person.fill")
+                        .foregroundColor(.white)
+                        .font(.system(size: 22, weight: .medium))
+                }
+                .frame(width: 46, height: 46)
             }
-            .frame(width: 46, height: 46)
+            .buttonStyle(.plain)
         }
     }
 }
 
+
 // MARK: - Segmented control
+// (El resto del código de la aplicación permanece sin cambios)
 
 struct HomeSegmentedControl: View {
     @Binding var selectedTab: HomeTab
@@ -102,7 +229,9 @@ struct HomeSegmentedControl: View {
         HStack(spacing: 0) {
             ForEach(HomeTab.allCases, id: \.self) { tab in
                 Button {
-                    selectedTab = tab
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        selectedTab = tab
+                    }
                 } label: {
                     Text(tab.rawValue)
                         .font(.subheadline.weight(.semibold))
@@ -257,6 +386,7 @@ struct PlantCard: View {
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color.white)
                 
+                // Nota: Asumo que tienes imágenes llamadas "PlantExample", "PlantExample2", etc.
                 Image(plant.imageName)
                     .resizable()
                     .scaledToFit()
@@ -278,6 +408,7 @@ struct PlantCard: View {
         .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
     }
 }
+
 struct MyPlantsListView: View {
     @Binding var plants: [Plant]
     
@@ -328,9 +459,15 @@ struct MyPlantsListView: View {
                     .buttonStyle(.plain)
                 }
             }
+            Spacer()
         }
+        .padding(.horizontal, -24) // Compensamos el padding de la HomeView si se usa como raíz
+        .padding(.top, 0)
+        .navigationTitle("All Plants")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
+
 struct PlantDetailView: View {
     let plant: Plant
     
@@ -435,13 +572,10 @@ struct PlantDetailView: View {
     }
     
     private var statusTextColor: Color {
-        if plant.status.lowercased().contains("water") {
-            return .black
-        } else {
-            return .black
-        }
+        return .black
     }
 }
+
 struct AddPlantView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var plants: [Plant]
@@ -593,6 +727,7 @@ struct AddPlantView: View {
         dismiss()
     }
 }
+
 struct InfoChip: View {
     let icon: String
     let title: String
@@ -647,7 +782,6 @@ struct TipsScreen: View {
         }
     }
 }
-
 
 // MARK: - Preview
 
