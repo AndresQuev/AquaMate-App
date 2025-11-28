@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AuthViewModel: View {
+    
     // Tabs
     @State private var isLogin: Bool = true
     

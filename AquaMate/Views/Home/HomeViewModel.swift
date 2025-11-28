@@ -8,7 +8,6 @@ import SwiftUI
 // TipCard mínimo
 
 // MARK: - 🎨 Paleta de Colores (AquaUI)
-
 struct AquaUI {
     static let background      = Color(red: 0.94, green: 0.97, blue: 0.90) // verde muy claro
     static let primaryGreen    = Color(red: 0.48, green: 0.63, blue: 0.24) // verde tab contenedor
@@ -205,26 +204,6 @@ struct SidebarButton: View {
 }
 
 // MARK: - 📍 Vistas de Destino (Placeholders)
-
-struct ProfileView: View {
-    var body: some View {
-        ZStack {
-            AquaUI.background.ignoresSafeArea()
-            VStack {
-                Image(systemName: "person.crop.circle.badge.checkmark")
-                    .font(.largeTitle)
-                    .foregroundColor(AquaUI.primaryGreen)
-                Text("Mi Perfil")
-                    .font(.title.bold())
-                Text("Aquí irían los detalles del usuario y sus estadísticas.")
-                    .font(.subheadline)
-            }
-            .padding()
-        }
-        .navigationTitle("Mi Perfil")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
 
 struct SettingsView: View {
     var body: some View {
