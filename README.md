@@ -43,6 +43,32 @@ Aquamate follows the **MVVM (Model–View–ViewModel)** pattern to ensure:
 <img width="435" height="876" alt="Sidebar" src="https://github.com/user-attachments/assets/25e4570c-b747-40b3-9482-a89da0529532" />
 <img width="465" height="861" alt="Profile" src="https://github.com/user-attachments/assets/71e47c0d-6bce-4c22-955f-bbb273646fe1" />
 
+## 🚀 How to Run
+1. Clone the repository
+2. Open `Aquamate.xcodeproj`
+3. Run on iPhone Simulator or physical device
+4. Allow notifications for reminders
 
+---
+
+## 📌 Future Improvements
+- ☁️ iCloud sync
+- 📆 Weekly & monthly statistics
+- 🎨 Theme customization
+- 🧪 Unit tests
+
+---
+
+## 👨‍💻 Author
+**Andrés Quevedo**  
+iOS Developer  
+
+📍 Argentina  
+📧 andresquev4@gmail.com  
+🔗 LinkedIn: https://linkedin.com/in/andrés-quevedo-copat-21a6491a1
+
+---
+
+⭐️ If you like this project, feel free to star the repository!
 
 
