@@ -9,7 +9,19 @@ import SwiftUI
 
 struct TipCard: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Did you know?")
+                .font(.headline)
+                .foregroundColor(.orange)
+            
+            Text("Keeping a regular watering schedule helps your plants grow healthier and stronger.")
+                .font(.subheadline)
+                .foregroundColor(.black.opacity(0.7))
+            }
+        .padding(16)
+        .background(AquaUI.softYellow)
+        .cornerRadius(18)
+        .shadow(color: .black.opacity(0.04), radius: 6, x: 0, y: 3)
     }
 }
 
